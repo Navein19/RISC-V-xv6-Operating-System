@@ -1,12 +1,34 @@
 OUTPUT_ARCH( "riscv" )
 
-/* Task: ensure the correct starting function. */
 ENTRY( _entry )
 
 SECTIONS
 {
-  /* Task: ensure the correct entry address based on where -kernel in QEMU jumps. */
-  . = 0x100000000;
+  . = 0x80000000;  /* This is bootloader-start */
 
-  /* Task lay out the sections as mentioned in the handout */
+  .text : {
+    *(.text .text.*)
+    . = ALIGN(4096);
+    PROVIDE(ecode = .);
+  }
+
+  .rodata : {
+    *(.rodata .rodata.*)
+    . = ALIGN(4096);
+    PROVIDE(erodata = .);
+  }
+
+  .data : {
+    *(.data .data.*)
+    . = ALIGN(4096);
+    PROVIDE(edata = .);
+  }
+
+  .bss : {
+    *(.bss .bss.*)
+    . = ALIGN(4096);
+    PROVIDE(ebss = .);
+  }
+
+  PROVIDE(end = .);
 }

@@ -4,8 +4,10 @@
 
 .section .text
 .global _entry
-_entry:
-        # task: setup a per-CPU stack for C and jump to start() function
+_entry: 
+    # Load the address of bl_stack_end to sp
+    la sp, bl_stack_end
+    call start
 
 spin:
-        j spin
+    j spin

@@ -13,7 +13,21 @@ struct proghdr* kernel_phdr;
 
 uint64 find_kernel_load_addr(enum kernel ktype) {
     /* CSE 536: Get kernel load address from headers */
-    return 0;
+    // Point an ELF struct (elfhdr) to RAMDISK
+    /* CSE 536: Get kernel load address from headers */
+    
+    uint64 kernel_addr = 0x0;
+    
+    if (ktype == NORMAL)
+    	kernel_addr = RAMDISK;
+    if (ktype == RECOVERY)
+    	kernel_addr = RECOVERYDISK;
+    
+    kernel_elfhdr =  (struct elfhdr *)kernel_addr;
+    
+     
+    kernel_phdr = (struct proghdr *) (kernel_addr + kernel_elfhdr->phoff + kernel_elfhdr->phentsize);
+    return kernel_phdr->vaddr;
 }
 
 uint64 find_kernel_size(enum kernel ktype) {

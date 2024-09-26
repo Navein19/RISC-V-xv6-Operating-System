@@ -14,6 +14,7 @@ void timerinit();
 
 /* entry.S needs one stack per CPU */
 __attribute__ ((aligned (16))) char bl_stack[STSIZE * NCPU];
+char *bl_stack_end = bl_stack + STSIZE * NCPU;
 
 /* Context (SHA-256) for secure boot */
 SHA256_CTX sha256_ctx;
@@ -68,8 +69,8 @@ bool is_secure_boot(void) {
 // entry.S jumps here in machine mode on stack0.
 void start()
 {
-  /* CSE 536: Define the system information table's location. */
-  sys_info_ptr = (struct sys_info*) 0x0;
+  //Define the system information table's location. */
+  sys_info_ptr = (struct sys_info*) 0x80080000;
 
   // keep each CPU's hartid in its tp register, for cpuid().
   int id = r_mhartid();

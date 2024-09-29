@@ -32,10 +32,42 @@ uint64 find_kernel_load_addr(enum kernel ktype) {
 
 uint64 find_kernel_size(enum kernel ktype) {
     /* CSE 536: Get kernel binary size from headers */
-    return 0;
+    uint64 kernel_addr = 0x0;
+    
+    
+    if (ktype == NORMAL)
+    	kernel_addr = RAMDISK;
+    if (ktype == RECOVERY)
+    	kernel_addr = RECOVERYDISK;
+    
+    kernel_elfhdr =  (struct elfhdr *)kernel_addr;
+    // Verify ELF magic number
+    if(kernel_elfhdr->magic != ELF_MAGIC) {
+        // Handle error: not a valid ELF file
+        return 0;
+    }
+    
+    
+    // Calculate end of section header table
+    
+    uint64 sect_table_end = kernel_addr + kernel_elfhdr->shoff + (kernel_elfhdr->shnum * kernel_elfhdr->shentsize);
+    
+    // Calculate size by subtracting the start address from the max end address
+    return sect_table_end - kernel_addr;
 }
 
 uint64 find_kernel_entry_addr(enum kernel ktype) {
-    /* CSE 536: Get kernel entry point from headers */
-    return 0;
+    
+    uint64 kernel_addr = 0x0;
+    
+    
+    if (ktype == NORMAL)
+    	kernel_addr = RAMDISK;
+    if (ktype == RECOVERY)
+    	kernel_addr = RECOVERYDISK;
+    
+    	
+
+    kernel_elfhdr = (struct elfhdr *)kernel_addr;
+    return (*kernel_elfhdr).entry;
 }

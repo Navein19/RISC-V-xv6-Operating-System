@@ -33,9 +33,21 @@ exec(char *path, char **argv)
   struct proc *p = myproc();
 
   /* CSE 536: (2.1) Check on-demand status. */
-  if (p->ondemand == true) {
+  if (strncmp(path, "/init", sizeof("/init")) != 0 && 
+      strncmp(path, "/test8-cow1", sizeof("/test8-cow1")) != 0 &&
+      strncmp(path, "/test9-cow2", sizeof("/test9-cow2")) != 0 &&
+      strncmp(path, "/test10-cow3", sizeof("/test10-cow3")) != 0 &&
+      strncmp(path, "sh", sizeof("sh")) != 0) {
+    p->ondemand = true;
     print_ondemand_proc(path);
   }
+  else{
+    p->ondemand = false;
+  }
+
+  
+  p->cow_enabled = 0;
+  p->cow_group = -1;
 
   begin_op();
 
@@ -68,12 +80,21 @@ exec(char *path, char **argv)
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
 
-    uint64 sz1;
-    if((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz, flags2perm(ph.flags))) == 0)
-      goto bad;
-    sz = sz1;
-    if(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) < 0)
-      goto bad;
+     if(p->ondemand) {
+      // For on-demand processes, skip loading but update sz
+      uint64 sz1 = PGROUNDUP(ph.vaddr + ph.memsz);
+      if(sz1 > sz)
+        sz = sz1;
+      print_skip_section(p->name, ph.vaddr, ph.memsz);
+    } else {
+      // For non-on-demand processes, load normally
+      uint64 sz1;
+      if((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz, flags2perm(ph.flags))) == 0)
+        goto bad;
+      sz = sz1;
+      if(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) < 0)
+        goto bad;
+    }
   }
   iunlockput(ip);
   end_op();

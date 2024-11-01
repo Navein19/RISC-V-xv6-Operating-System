@@ -102,6 +102,14 @@ timervec:
         sd a1, 0(a0)
         sd a2, 8(a0)
         sd a3, 16(a0)
+        
+        # Adding 4096 to globtime variable during each occurence of timer interrupt
+        lui a1, %hi(globtime)    # Load upper 20 bits of globtime address
+        addi a1, a1, %lo(globtime)  # Add lower 12 bits of address
+        ld a2, 0(a1)            # Load current globtime value
+        addi a2, a2, 4096       # Add 4096 to globtime
+        sd a2, 0(a1)            # Store back to globtime
+
 
         # schedule the next timer interrupt
         # by adding interval to mtimecmp.

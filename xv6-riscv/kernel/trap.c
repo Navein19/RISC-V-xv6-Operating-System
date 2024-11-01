@@ -6,8 +6,15 @@
 #include "proc.h"
 #include "defs.h"
 
+// initializing CPU global time here
+unsigned long globtime = 0;
+
 struct spinlock tickslock;
 uint ticks;
+
+
+// Modify the timervec handler in assembly to increment globtime
+// This will be done in timervec.S
 
 extern char trampoline[], uservec[], userret[];
 
@@ -15,6 +22,7 @@ extern char trampoline[], uservec[], userret[];
 void kernelvec();
 
 extern int devintr();
+
 
 void
 trapinit(void)

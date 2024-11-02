@@ -22,6 +22,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int ctime(void); //defining the new syscall wrapper for ctime in user mode
 
 // ulib.c
 int stat(const char*, struct stat*);

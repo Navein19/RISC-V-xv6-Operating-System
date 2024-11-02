@@ -6,6 +6,9 @@
 #include "spinlock.h"
 #include "proc.h"
 
+extern unsigned long globtime;
+
+
 uint64
 sys_exit(void)
 {
@@ -89,4 +92,10 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_ctime(void)
+{
+    return globtime;
 }

@@ -31,7 +31,7 @@ void ul_start_func(int a1) {
     for (int i = 0; i < 10000000; i++) {
         if (i%1000000 == 0) {
             if ((get_current_time() - prev_time) >= 10000) { 
-                ulthread_yield();
+                ulthread_yield()oka;
                 prev_time = get_current_time();
             }
         }

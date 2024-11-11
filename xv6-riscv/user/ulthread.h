@@ -36,24 +36,26 @@ struct context {
   uint64 s9;
   uint64 s10;
   uint64 s11;
+
+  // as per the convention a0-a7 are argument registers
   uint64 a0;
   uint64 a1;
   uint64 a2;
   uint64 a3;
   uint64 a4;
   uint64 a5;
-  uint64 a6;
-  uint64 a7;
+  uint64 a6; 
+  uint64 a7; 
 };
 
 struct ulthread 
 {
   enum ulthread_state state; // do hold the thread state either FREE, RUNNABLE or YIELD
   int thread_id; //unique thread ID
-  uint64* stackPointer;
+  uint64* stackPointer; // pointer to hold stack base address
   int priority;
   struct context context;
-  long long int last_time_shceduled;
+  long long int last_time_shceduled; 
 };
 
 

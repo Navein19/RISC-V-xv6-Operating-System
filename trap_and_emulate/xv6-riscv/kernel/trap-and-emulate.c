@@ -274,13 +274,26 @@ void trap_and_emulate_init(void) {
 void trap_and_emulate(void) {
     /* Comes here when a VM tries to execute a supervisor instruction. */
 
+    struct proc *p = myproc();
+
     /* Retrieve all required values from the instruction */
-    uint64 addr     = 0;
-    uint32 op       = 0;
-    uint32 rd       = 0;
-    uint32 funct3   = 0;
-    uint32 rs1      = 0;
-    uint32 uimm     = 0;
+    uint64 addr     = r_sepc();
+    uint32 instruction = 0; // in RISCV-xv6 all the instructions are 32 bit
+    
+    // Fetch the instruction from virtual memory
+    if (copyin(p->pagetable, (char *)&instruction, addr, sizeof(uint32)) < 0) {
+        panic("Failed to fetch instruction from virtual memory");
+    }
+    
+    // Decode and handle the instruction (rest of the code unchanged)
+    uint32 op = instruction & 0x7F;               // Bits [6:0] (opcode)
+    uint32 rd = (instruction >> 7) & 0x1F;        // Bits [11:7] (destination register)
+    uint32 funct3 = (instruction >> 12) & 0x7;    // Bits [14:12] (funct3)
+    uint32 rs1 = (instruction >> 15) & 0x1F;      // Bits [19:15] (source register)
+    uint32 uimm = (instruction >> 20) & 0xFFF;     // Bits [31:20] (CSR address)
+
+    printf("(Decoded Instruction) addr: %p, opcode: 0x%x, rd: x%d, funct3: 0x%x, rs1: x%d, csr: 0x%x\n",
+           addr, op, rd, funct3, rs1, uimm);
 
     /* Print the statement */
     printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", 

@@ -51,6 +51,10 @@ usertrap(void)
   p->trapframe->epc = r_sepc();
 
   if(r_scause() == 8){
+    if (strncmp(p->name, "vm-", 3) == 0) {
+      p->proc_te_vm = 1;
+      trap_and_emulate();
+    }
     // system call
     if(killed(p))
       exit(-1);
@@ -66,7 +70,11 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
-  } else {
+  } else if ((strncmp(p->name, "vm-", 3) == 0) && r_scause() != 12 && r_scause() != 13 && r_scause() != 15) {
+     p->proc_te_vm = 1;
+     trap_and_emulate();
+  }
+  else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     setkilled(p);

@@ -9,9 +9,9 @@
 
 #include <stdbool.h>
 
-#define M_MODE 0
+#define M_MODE 2
 #define S_MODE 1
-#define U_MODE 2
+#define U_MODE 0
 
 // Struct to keep VM registers (Sample; feel free to change.)
 struct vm_reg
@@ -89,119 +89,123 @@ struct vm_virtual_state
 
 struct vm_virtual_state vm_state;
 
-struct vm_reg get_csr_reg(uint32 csr_address, struct vm_virtual_state *vm_state)
+struct vm_reg* get_csr_reg(uint32 csr_address, struct vm_virtual_state *vm_state)
 {
     switch (csr_address)
     {
     // User trap setup
     case CSR_USTATUS:
-        return vm_state->ustatus;
+        return &vm_state->ustatus;
     case CSR_UIE:
-        return vm_state->uie;
+        return &vm_state->uie;
     case CSR_UTVEC:
-        return vm_state->utvec;
+        return &vm_state->utvec;
 
     // User trap handling
     case CSR_USCRATCH:
-        return vm_state->uscratch;
+        return &vm_state->uscratch;
     case CSR_UEPC:
-        return vm_state->uepc;
+        return &vm_state->uepc;
     case CSR_UCAUSE:
-        return vm_state->ucause;
+        return &vm_state->ucause;
     case CSR_UTVAL:
-        return vm_state->utval;
+        return &vm_state->utval;
     case CSR_UIP:
-        return vm_state->uip;
+        return &vm_state->uip;
 
     // Supervisor trap setup
     case CSR_SSTATUS:
-        return vm_state->sstatus;
+        return &vm_state->sstatus;
     case CSR_SEDELEG:
-        return vm_state->sedeleg;
+        return &vm_state->sedeleg;
     case CSR_SIDELEG:
-        return vm_state->sideleg;
+        return &vm_state->sideleg;
     case CSR_SIE:
-        return vm_state->sie;
+        return &vm_state->sie;
     case CSR_STVEC:
-        return vm_state->stvec;
+        return &vm_state->stvec;
     case CSR_SCOUNTEREN:
-        return vm_state->scounteren;
+        return &vm_state->scounteren;
 
     // Supervisor trap handling
     case CSR_SSCRATCH:
-        return vm_state->sscratch;
+        return &vm_state->sscratch;
     case CSR_SEPC:
-        return vm_state->sepc;
+        return &vm_state->sepc;
     case CSR_SCAUSE:
-        return vm_state->scause;
+        return &vm_state->scause;
     case CSR_STVAL:
-        return vm_state->stval;
+        return &vm_state->stval;
     case CSR_SIP:
-        return vm_state->sip;
+        return &vm_state->sip;
 
     // Supervisor page table register
     case CSR_SATP:
-        return vm_state->satp;
+        return &vm_state->satp;
 
     // Machine information registers
     case CSR_MVENDORID:
-        return vm_state->mvendorid;
+        return &vm_state->mvendorid;
     case CSR_MARCHID:
-        return vm_state->marchid;
+        return &vm_state->marchid;
     case CSR_MIMPID:
-        return vm_state->mimpid;
+        return &vm_state->mimpid;
     case CSR_MHARTID:
-        return vm_state->mhartid;
+        return &vm_state->mhartid;
 
     // Machine trap setup registers
     case CSR_MSTATUS:
-        return vm_state->mstatus;
+        return &vm_state->mstatus;
     case CSR_MISA:
-        return vm_state->misa;
+        return &vm_state->misa;
     case CSR_MEDELEG:
-        return vm_state->medeleg;
+        return &vm_state->medeleg;
     case CSR_MIDELEG:
-        return vm_state->mideleg;
+        return &vm_state->mideleg;
     case CSR_MIE:
-        return vm_state->mie;
+        return &vm_state->mie;
     case CSR_MTVEC:
-        return vm_state->mtvec;
+        return &vm_state->mtvec;
     case CSR_MCOUNTEREN:
-        return vm_state->mcounteren;
+        return &vm_state->mcounteren;
 
     // Machine trap handling registers
     case CSR_MSCRATCH:
-        return vm_state->mscratch;
+        return &vm_state->mscratch;
     case CSR_MEPC:
-        return vm_state->mepc;
+        return &vm_state->mepc;
     case CSR_MCAUSE:
-        return vm_state->mcause;
+        return &vm_state->mcause;
     case CSR_MTVAL:
-        return vm_state->mtval;
+        return &vm_state->mtval;
     case CSR_MIP:
-        return vm_state->mip;
+        return &vm_state->mip;
 
     // Machine physical memory protection registers
     case CSR_PMPCFG_BASE ...(CSR_PMPCFG_BASE + 15): // pmpcfg0 to pmpcfg15
         vm_state->pmp_setup = true;                 // enbaling PMP is any of cgf registers is being used in the instruction
-        return vm_state->pmpcfg[csr_address - CSR_PMPCFG_BASE];
+        return &vm_state->pmpcfg[csr_address - CSR_PMPCFG_BASE];
     case CSR_PMPADDR_BASE ...(CSR_PMPADDR_BASE + 63): // pmpaddr0 to pmpaddr63
         vm_state->pmp_setup = true;
-        return vm_state->pmpaddr[csr_address - CSR_PMPADDR_BASE];
+        return &vm_state->pmpaddr[csr_address - CSR_PMPADDR_BASE];
 
     // Default case
     default:
+    
         panic("Trap and Emulate : Unknown CSR address!!");
     }
 }
 
-void init_reg(int MODE, uint32 code, uint64 val)
-{
+void init_reg(int MODE, uint32 code, uint64 val) {
+    struct vm_reg tempReg;
+    tempReg.code = code; 
+    tempReg.mode = MODE;
+    tempReg.val = val; 
 
-    struct vm_reg reg = get_csr_reg(code, &vm_state);
-    reg.code = code;
-    reg.mode = MODE;
-    reg.val = 0;
+    struct vm_reg* regPtr = get_csr_reg(code, &vm_state);
+    if (regPtr != NULL) {
+        *regPtr = tempReg;
+    }
 }
 
 void trap_and_emulate_init(void)
@@ -295,7 +299,7 @@ void emulate_sret(struct proc *p)
         panic("Invalid SPP value during SRET emulation");
     }
 
-    p->trapframe->epc = vm_state.sepc.val;
+    p->trapframe->epc = sepc;
 }
 
 void emulate_mret(struct proc *p)
@@ -398,19 +402,19 @@ void emulate_csrr(struct proc *p, uint32 rd, uint32 rs1, uint32 uimm)
         panic("Invalid CSRW instruction, destination, rs1 register is not empty");
     }
 
-    struct vm_reg src = get_csr_reg(uimm, &vm_state);
+    struct vm_reg* src = get_csr_reg(uimm, &vm_state);
     uint64 *dest = &(p->trapframe->ra) + rd - 1;
 
     if ((uimm == CSR_MVENDORID)) // CSRR instruction can be used to read CSR_MVENDORID in all privilege modes
     {
-        *dest = src.val;
+        *dest = src->val;
         p->trapframe->epc += 4;
         return;
     }
 
-    if (vm_state.priviledge_mode >= src.mode)
+    if (vm_state.priviledge_mode >= src->mode)
     {
-        *dest = src.val;
+        *dest = src->val;
         p->trapframe->epc += 4;
     }
     else
@@ -426,28 +430,32 @@ void emulate_csrw(struct proc *p, uint32 rd, uint32 rs1, uint32 uimm)
 
     if (rd != 0x0)
     {
+        //printf("here1");
         setkilled(p);
         trap_and_emulate_init();
         panic("Invalid CSRW instruction, destination, rd register is not empty");
     }
 
-    struct vm_reg dest = get_csr_reg(uimm, &vm_state);
+    struct vm_reg* dest = get_csr_reg(uimm, &vm_state);
     uint64 *src = &(p->trapframe->ra) + rs1 - 1;
 
-    if (vm_state.priviledge_mode >= dest.mode)
+    if (vm_state.priviledge_mode >= dest->mode)
     {
+        //printf("here2");
         if ((uimm == CSR_MVENDORID) && (*src == 0x0))
         {
             // cannot overrite empty value into vendorID hardware register
+            //printf("here3");
             setkilled(p);
             trap_and_emulate_init();
         }
-
-        dest.val = *src;
+        //printf("here4");
+        dest->val = *src;
         p->trapframe->epc += 4;
     }
     else
     {
+        //printf("here5");
         setkilled(p);
         trap_and_emulate_init();
         panic("Invalid instruction CSRW, trying to execute higher privelaged instruction ...");
@@ -464,6 +472,7 @@ void trap_and_emulate(void)
 
     struct proc *p = myproc();
 
+    //printf("current mode : %d", vm_state.priviledge_mode);
     /* Retrieve all required values from the instruction */
     uint64 addr = r_sepc();
     uint32 instruction = 0; // in RISCV-xv6 all the instructions are 32 bit
@@ -481,8 +490,7 @@ void trap_and_emulate(void)
     uint32 rs1 = (instruction >> 15) & 0x1F;   // Bits [19:15] (source register)
     uint32 uimm = (instruction >> 20) & 0xFFF; // Bits [31:20] (CSR address)
 
-    printf("(Decoded Instruction) addr: %p, opcode: 0x%x, rd: x%d, funct3: 0x%x, rs1: x%d, csr: 0x%x\n",
-           addr, op, rd, funct3, rs1, uimm);
+    // printf("(Decoded Instruction) addr: %p, opcode: 0x%x, rd: x%d, funct3: 0x%x, rs1: x%d, csr: 0x%x\n",addr, op, rd, funct3, rs1, uimm);
 
     int current_mode = vm_state.priviledge_mode;
 
@@ -504,35 +512,44 @@ void trap_and_emulate(void)
                     }
                     // ECALL
                     emulate_ecall(current_mode, p);
-                    printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
+                    //printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
                 }
-            }
-            else if (uimm == 0x102 && current_mode == S_MODE)
-            {
-                // SRET
-                /* Print the statement */
-                printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
-                emulate_sret(p);
-            }
-            else if (uimm == 0x302 && current_mode == M_MODE)
-            {
-                // MRET
-                printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
-                emulate_mret(p);
+
+                else if (uimm == 0x102 && current_mode == S_MODE)
+                {
+                    // SRET
+                    /* Print the statement */
+                    printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
+                    emulate_sret(p);
+                }
+                else if (uimm == 0x302 && current_mode == M_MODE)
+                {
+                    // MRET
+                    printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
+                    emulate_mret(p);
+                }
+                else
+                {
+                    printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
+                    printf("Instruction is not correct.\n");
+                    setkilled(p);
+                    trap_and_emulate_init();
+                }
             }
             else
             {
                 printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
-                printf("Instruction is not correct.\n");
+               printf("Instruction is not correct\n");
                 setkilled(p);
                 trap_and_emulate_init();
             }
+
             break;
         case 0x1: // for CSRW
             printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
             emulate_csrw(p, rd, rs1, uimm);
             break;
-        case 0x2: // for CSRW
+        case 0x2: // for CSR
             printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n", addr, op, rd, funct3, rs1, uimm);
             emulate_csrr(p, rd, rs1, uimm);
             break;
@@ -546,8 +563,4 @@ void trap_and_emulate(void)
         setkilled(p);
         panic("Unsupported opcode in trap_and_emulate()");
     }
-
-    /* Print the statement */
-    printf("(PI at %p) op = %x, rd = %x, funct3 = %x, rs1 = %x, uimm = %x\n",
-           addr, op, rd, funct3, rs1, uimm);
 }
